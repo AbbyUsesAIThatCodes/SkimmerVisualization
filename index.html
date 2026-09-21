@@ -1,0 +1,94 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Skimmer: cut, fold, assemble</title><style>
+*{box-sizing:border-box}body{margin:0;background:#eef2ee;color:#163630;font:18px system-ui,sans-serif}main{max-width:1500px;margin:auto;padding:22px}header{display:flex;justify-content:space-between;gap:20px;align-items:center}h1{font-size:32px;margin:0}header p{margin:6px 0 12px;color:#49625c}canvas{display:block;width:100%;aspect-ratio:16/9;background:#fafaf5;border:1px solid #b5c7be;border-radius:12px}.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}button,select{font:inherit;border:1px solid #749286;padding:10px 15px;border-radius:7px;background:white;color:#15392d;cursor:pointer}button.primary{background:#195b49;color:white}input{flex:1;min-width:180px;accent-color:#195b49}small{font-size:15px;color:#415b50}.legend{display:flex;gap:20px;flex-wrap:wrap}.legend span:before{content:'';display:inline-block;width:15px;height:15px;margin-right:7px;background:var(--c);border:1px solid #435b51}#status{min-width:70px}main:fullscreen{background:#eef2ee;padding:16px;max-width:none}main:fullscreen canvas{height:calc(100vh - 225px);width:100%;aspect-ratio:auto}
+</style><main id="app"><header><div><h1>Skimmer: cut, fold, assemble</h1><p>Watch one step. Pause. Build that step.</p></div><button id="full">Full screen</button></header><canvas id="view" width="1440" height="810" aria-label="Animated three-dimensional skimmer assembly"></canvas><div class="controls"><button class="primary" id="play">Play</button><button id="back">Previous step</button><button id="next">Next step</button><button id="reset">Restart</button><input id="time" aria-label="Animation timeline" type="range" min="0" max="72" step="0.05" value="0"><span id="status">0:00</span><select id="speed" aria-label="Playback speed"><option value=".5">Half speed</option><option value="1" selected>Normal speed</option></select></div><div class="controls"><select id="stage" aria-label="Choose a construction step"></select><button id="camera">Reset camera</button><label><input id="pauseSteps" type="checkbox" checked style="min-width:0"> Pause at each step</label></div><div class="legend"><span style="--c:#5ab8b2">Body</span><span style="--c:#edb760">Two fins</span><span style="--c:#ae93d0">Air scoop</span></div><p><small>Drag the picture to rotate the view. Space = play/pause. All pieces come from one file-folder half; this shows the shapes separating after cutting. Fold angles and thickness are illustrative. Match the teacher's working model. Glue drying and launcher setup are not animated.</small></p></main><script>/* Original classroom illustration. Coordinates in inches; paper thickness omitted in motion. */
+const Skimmer = (() => {
+const duration=72, stages=[
+[0,'1 / One sheet, four paper pieces','One body + two matching fins + one air scoop. Solid outlines are cuts.'],
+[5,'2 / Separate the parts','Cut the outside shapes and the two rear slits. Keep every hinge and tab.'],
+[10,'3 / Fold the body rails','Fold both half-inch side rails DOWN along the drawn lines.'],
+[17,'4 / Fold the scoop tabs','Fold along the two drawn lines. Both tabs bend to the same side.'],
+[23,'5 / Attach the two fins','Tall edges at the REAR. Overlap each bottom strip with a rear rail.'],
+[31,'6 / Set the rear panel','Lower the rear center panel slightly. Attach its side edges to the fins.'],
+[36,'7 / Turn the skimmer over','Look inside the underside channel. The scoop belongs under the FRONT.'],
+[43,'8 / Fit the scoop under the nose','Narrow end flush with the nose. Both tabs fit INSIDE the side rails.'],
+[51,'9 / Look closely at the joint','Attach TAB faces to INNER RAIL faces. Leave the broad scoop center unglued.'],
+[59,'10 / Return upright','The scoop stays under the front. The fins stay at the rear.'],
+[65,'11 / Check before testing','Let glue dry. Teacher checks the shape and demonstrates the actual launcher.']];
+const smooth=(t,a,b)=>{let q=Math.max(0,Math.min(1,(t-a)/(b-a)));return q*q*(3-2*q)};
+const add=(p,q)=>p.map((v,i)=>v+q[i]);
+const rx=(p,a)=>[p[0],p[1]*Math.cos(a)-p[2]*Math.sin(a),p[1]*Math.sin(a)+p[2]*Math.cos(a)];
+const ry=(p,a)=>[p[0]*Math.cos(a)+p[2]*Math.sin(a),p[1],-p[0]*Math.sin(a)+p[2]*Math.cos(a)];
+const rect=(x0,x1,y0,y1,z=0)=>[[x0,y0,z],[x1,y0,z],[x1,y1,z],[x0,y1,z]];
+const colors={body:'#5ab8b2',fin:'#edb760',scoop:'#ae93d0',sheet:'#ede8dc'};
+function scene(t,{flipOverride=null,finExplode=0,scoopExplode=0}={}) {
+ const polys=[];const put=(id,part,p)=>polys.push({id,part,p,color:colors[part]});
+ const fold=smooth(t,10,17)*Math.PI/2;
+ put('deck','body',rect(3,11,-1.5,1.5));
+ const rear=smooth(t,31,36)*Math.asin(.5/3);
+ put('rear_panel','body',rect(0,3,-1.5,1.5).map(p=>add(ry(add(p,[-3,0,0]),-rear),[3,0,0])));
+ for(const side of [-1,1]){
+  const y=side*1.5;
+  put('rail_'+side,'body',rect(0,11,Math.min(y,side*2),Math.max(y,side*2)).map(p=>add(rx(add(p,[0,-y,0]),-side*fold),[0,y,0])));
+ }
+ const fp=[[0,0,0],[3,0,0],[3,.5,0],[.5,3,0],[0,3,0]];
+ const fa=smooth(t,23,31),cut=smooth(t,5,10);
+ for(const [j,side] of [[0,-1],[1,1]]){
+  const start=[j*3.4-.25*cut,2.6+.45*cut,.1*cut],end=[0,side*(1.53+finExplode),-.5];
+  const pos=start.map((v,i)=>v*(1-fa)+end[i]*fa);
+  put('fin_'+side,'fin',fp.map(p=>add(rx(p,fa*Math.PI/2),pos)));
+ }
+ const sf=smooth(t,17,23),sa=smooth(t,43,51),tilt=Math.asin(.25/3);
+ const sp=[8+(3-3*Math.cos(tilt))*sa, (4.5+.55*cut)*(1-sa),-.375*sa-scoopExplode];
+ // Tiny illustrative paper-layer offset prevents coplanar flicker at the glue joint.
+ const scoop=(p)=>add(ry([p[0],p[1]*(1-.01*sa),p[2]],-tilt*sa),sp);
+ put('scoop_center','scoop',rect(0,3,-1.5,1.5).map(scoop));
+ for(const side of [-1,1]){
+  const y=side*1.5;let p=[[0,y,0],[3,y,0],[3,y+side*.125,0],[0,y+side*.375,0]];
+  put('scoop_tab_'+side,'scoop',p.map(p=>scoop(add(rx(add(p,[0,-y,0]),side*sf*Math.PI/2),[0,y,0]))));
+ }
+ if(t<7)put('sheet','sheet',rect(0,11,-2,6.5,-.025));
+ let flip=flipOverride===null?Math.PI*smooth(t,36,43)*(1-smooth(t,59,65)):flipOverride;
+ for(const q of polys)q.p=q.p.map(p=>rx(p,flip));
+ return polys;
+}
+function projection(polys,{yaw=.48,elevation=.64,width=1200,height=670,pad=60,focus=0}={}){
+ const transform=p=>{const x=p[0]-5.5,y=p[1],z=p[2];const u=x*Math.cos(yaw)-y*Math.sin(yaw),v=x*Math.sin(yaw)+y*Math.cos(yaw);return [u,v*Math.sin(elevation)-z*Math.cos(elevation),v*Math.cos(elevation)+z*Math.sin(elevation)]};
+ const raw=polys.map(q=>({...q,pts:q.p.map(transform)}));const pts=raw.flatMap(q=>q.pts);
+ let xmin=Math.min(...pts.map(p=>p[0])),xmax=Math.max(...pts.map(p=>p[0])),ymin=Math.min(...pts.map(p=>p[1])),ymax=Math.max(...pts.map(p=>p[1]));
+ const target=transform([9.6,0,-.1]);let cx=(xmin+xmax)/2,cy=(ymin+ymax)/2;
+ cx=cx*(1-focus)+target[0]*focus;cy=cy*(1-focus)+target[1]*focus;
+ let scale=Math.min((width-2*pad)/(xmax-xmin),(height-2*pad)/(ymax-ymin));scale*=1+1.1*focus;
+ for(const q of raw){q.pts=q.pts.map(p=>[(p[0]-cx)*scale+width/2,(p[1]-cy)*scale+height/2,p[2]]);q.depth=q.pts.reduce((s,p)=>s+p[2],0)/q.pts.length;}
+ raw.sort((a,b)=>a.depth-b.depth);return {polys:raw,point:p=>{const q=transform(p);return [(q[0]-cx)*scale+width/2,(q[1]-cy)*scale+height/2]},scale};
+}
+function svg(t,opts={}){
+ const w=opts.width||1000,h=opts.height||500;const qs=scene(t,opts).filter(q=>q.id!=='sheet'&&(!opts.parts||opts.parts.includes(q.part)));
+ const pr=projection(qs,{width:w,height:h,pad:25,...opts});
+ const gray={body:'#f3f3f3',fin:'#d8d8d8',scoop:'#e4e4e4'};
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`+pr.polys.map(q=>`<polygon points="${q.pts.map(p=>p.slice(0,2).join(',')).join(' ')}" fill="${gray[q.part]}" stroke="#111" stroke-width="2.2" stroke-linejoin="round"/>`).join('')+'</svg>';
+}
+return {duration,stages,scene,projection,svg,smooth,rx,ry};
+})();
+if(typeof module!=='undefined')module.exports=Skimmer;
+
+const canvas=document.querySelector('#view'),ctx=canvas.getContext('2d'),time=document.querySelector('#time'),play=document.querySelector('#play'),stageSelect=document.querySelector('#stage');let t=0,running=false,yaw=.48,elev=.64,last=0,drag=null,offsetYaw=0,offsetElev=0;
+const raster=document.createElement('canvas'),gl=raster.getContext('webgl',{antialias:true,preserveDrawingBuffer:true});let program=null,buffer=null;
+if(gl){function shader(type,text){let s=gl.createShader(type);gl.shaderSource(s,text);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
+program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,'attribute vec3 p; attribute vec3 c; varying vec3 color; void main(){gl_Position=vec4(p,1.0);color=c;}'));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,'precision mediump float; varying vec3 color; void main(){gl_FragColor=vec4(color,1.0);}'));gl.linkProgram(program);buffer=gl.createBuffer();}
+function paint3D(projection,W,H){if(!gl){ctx.fillStyle='#173a34';ctx.font='24px system-ui';ctx.fillText('3D graphics unavailable in this browser. Please use the accompanying MP4.',35,180);return}
+raster.width=W;raster.height=H;gl.viewport(0,0,W,H);gl.clearColor(250/255,250/255,245/255,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.useProgram(program);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);const pos=gl.getAttribLocation(program,'p'),color=gl.getAttribLocation(program,'c');gl.enableVertexAttribArray(pos);gl.enableVertexAttribArray(color);gl.vertexAttribPointer(pos,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(color,3,gl.FLOAT,false,24,12);
+let fill=[],edges=[];for(const q of projection.polys){let col=[1,3,5].map(j=>parseInt(q.color.slice(j,j+2),16)/255);if(q.id==='sheet'){let a=1-Skimmer.smooth(t,5,7);col=col.map((v,i)=>v*a+[250/255,250/255,245/255][i]*(1-a))}let vertex=(p,c,bias=0)=>[p[0]/W*2-1,1-p[1]/H*2,-p[2]/50-bias,...c];for(let k=1;k<q.pts.length-1;k++)for(const p of [q.pts[0],q.pts[k],q.pts[k+1]])fill.push(...vertex(p,col));for(let k=0;k<q.pts.length;k++)for(const p of [q.pts[k],q.pts[(k+1)%q.pts.length]])edges.push(...vertex(p,[23/255,58/255,52/255],.00005))}
+gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(fill),gl.DYNAMIC_DRAW);gl.drawArrays(gl.TRIANGLES,0,fill.length/6);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(edges),gl.DYNAMIC_DRAW);gl.drawArrays(gl.LINES,0,edges.length/6);ctx.drawImage(raster,0,0);}
+Skimmer.stages.forEach(([s,label])=>{const o=document.createElement('option');o.value=s;o.textContent=label;stageSelect.append(o)});
+function stageIndex(t){let i=0;Skimmer.stages.forEach((s,j)=>{if(t>=s[0])i=j});return i}
+function render(){const i=stageIndex(t),stage=Skimmer.stages[i],W=canvas.width,H=canvas.height;ctx.fillStyle='#fafaf5';ctx.fillRect(0,0,W,H);ctx.fillStyle='#153e35';ctx.font='bold 32px system-ui';ctx.fillText(stage[1],35,48);ctx.font='22px system-ui';ctx.fillText(stage[2],35,88);
+const focus=Skimmer.smooth(t,51,54)*(1-Skimmer.smooth(t,56,59));let polys=Skimmer.scene(t);const p=Skimmer.projection(polys,{width:W,height:H-145,pad:100,yaw:yaw+offsetYaw,elevation:elev+offsetElev,focus});ctx.save();ctx.translate(0,125);ctx.beginPath();ctx.rect(0,0,W,H-145);ctx.clip();
+paint3D(p,W,H-145);
+ctx.globalAlpha=1;
+if(t>10&&t<51||t>=59){const flip=Math.PI*Skimmer.smooth(t,36,43)*(1-Skimmer.smooth(t,59,65));for(const [v,label] of [[[0,0,0],'REAR / FINS'],[[11,0,0],'FRONT / NOSE']]){const q=p.point(Skimmer.rx(v,flip));ctx.font='bold 20px system-ui';const tw=ctx.measureText(label).width;ctx.fillStyle='#fafaf5';ctx.fillRect(q[0]-tw/2-8,q[1]+12,tw+16,29);ctx.fillStyle='#183c33';ctx.fillText(label,q[0]-tw/2,q[1]+34)}}
+ctx.restore();ctx.fillStyle='#53675e';ctx.font='17px system-ui';ctx.fillText(t>=36&&t<59?'UNDERSIDE VIEW — look inside the rails':'BODY • TWO FINS • AIR SCOOP',35,H-18);time.value=t;document.querySelector('#status').textContent='0:'+Math.floor(t).toString().padStart(2,'0');stageSelect.value=stage[0];play.textContent=running?'Pause':'Play';}
+function setTime(v){t=Math.max(0,Math.min(72,v));render()}window.setAnimationTime=setTime;window.renderAnimationFrame=(v)=>{running=false;setTime(v)};
+function tick(now){if(running&&last){let next=Math.min(72,t+(now-last)/1000*Number(document.querySelector('#speed').value));if(document.querySelector('#pauseSteps').checked&&stageIndex(next)>stageIndex(t)){next=Skimmer.stages[stageIndex(next)][0];running=false}t=next;if(t>=72)running=false;render()}last=now;requestAnimationFrame(tick)}requestAnimationFrame(tick);
+play.onclick=()=>{if(t>=72)t=0;running=!running;render()};time.oninput=()=>{running=false;setTime(Number(time.value))};stageSelect.onchange=()=>{running=false;setTime(Number(stageSelect.value))};document.querySelector('#next').onclick=()=>{running=false;setTime(Skimmer.stages[Math.min(stageIndex(t)+1,10)][0])};document.querySelector('#back').onclick=()=>{running=false;setTime(Skimmer.stages[Math.max(stageIndex(t)-1,0)][0])};document.querySelector('#reset').onclick=()=>{running=false;setTime(0)};document.querySelector('#camera').onclick=()=>{offsetYaw=offsetElev=0;render()};document.querySelector('#full').onclick=()=>document.fullscreenElement?document.exitFullscreen():document.querySelector('#app').requestFullscreen();
+canvas.onpointerdown=e=>{drag=[e.clientX,e.clientY,offsetYaw,offsetElev];canvas.setPointerCapture(e.pointerId)};canvas.onpointermove=e=>{if(drag){offsetYaw=drag[2]+(e.clientX-drag[0])*.007;offsetElev=Math.max(-.4,Math.min(.65,drag[3]+(e.clientY-drag[1])*.006));render()}};canvas.onpointerup=()=>drag=null;document.addEventListener('keydown',e=>{if(e.code==='Space'&&!['INPUT','SELECT'].includes(e.target.tagName)){e.preventDefault();play.click()}});render();
+</script></html>
