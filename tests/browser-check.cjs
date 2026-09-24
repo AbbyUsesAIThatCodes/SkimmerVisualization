@@ -11,11 +11,16 @@ const qaDir=path.join(__dirname,'..','test-output');fs.mkdirSync(qaDir,{recursiv
   assert.equal(await page.evaluate(()=>SkimmerApp.hasWebGL()),true);
   assert.equal(await page.locator('#stepTitle').innerText(),'Start with whole, blank paper');
   await page.locator('#play').click();await page.waitForFunction(()=>SkimmerApp.state.t>0&&!SkimmerApp.state.running);assert.equal(await page.locator('#status').innerText(),'2 / 42');
+  await page.evaluate(()=>{SkimmerApp.state.t=Skimmer.stages[1].at-1e-10;SkimmerApp.state.running=true;SkimmerApp.advance(.02);});
+  assert.ok(await page.evaluate(()=>SkimmerApp.state.t===Skimmer.stages[1].at&&!SkimmerApp.state.running));
   const prior=await page.evaluate(()=>SkimmerApp.state.t);await page.locator('#replay').click();await page.waitForFunction(()=>!SkimmerApp.state.running);assert.equal(await page.evaluate(()=>SkimmerApp.state.t),prior);
   await page.locator('#stage').selectOption('24');assert.match(await page.locator('#measurement').innerText(),/1\/8 in/);
-  await page.locator('#metric').click();assert.equal(await page.locator('#measurement').innerText(),'3.175 mm');assert.match(await page.locator('#instruction').innerText(),/3.175 mm/);
+  await page.locator('#metric').click();assert.deepEqual(await page.locator('.measure-value').allTextContents(),['3.175 mm','76.2 mm']);assert.match(await page.locator('#instruction').innerText(),/3.175 mm/);
   await page.screenshot({path:path.join(qaDir,'metric-tab.png')});
   await page.locator('#imperial').click();await page.locator('#stage').selectOption('5');await page.screenshot({path:path.join(qaDir,'rail-drawing.png')});
+  for(const [step,name] of [[1,'drawn-paper-edge'],[7,'second-rail-dimensions'],[13,'air-fin-dimensions'],[26,'air-scoop-dimensions']]){
+    await page.locator('#stage').selectOption(String(step));await page.screenshot({path:path.join(qaDir,`${name}.png`)});
+  }
   await page.locator('#stage').selectOption('31');await page.screenshot({path:path.join(qaDir,'colored.png')});
   await page.locator('#next').click();assert.equal(await page.evaluate(()=>SkimmerApp.state.view),'iso');
   await page.locator('#stage').selectOption('41');await page.screenshot({path:path.join(qaDir,'assembled.png')});
@@ -36,7 +41,7 @@ const qaDir=path.join(__dirname,'..','test-output');fs.mkdirSync(qaDir,{recursiv
   await page.locator('#play').click();await page.waitForFunction(()=>SkimmerApp.state.t>Skimmer.assemblyStart+.2);await page.locator('#play').click();assert.equal(await page.evaluate(()=>SkimmerApp.state.running),false);
   await page.locator('#reset').click();assert.equal(await page.evaluate(()=>SkimmerApp.state.t),0);assert.equal(await page.locator('#back').isDisabled(),true);
   // Review every stage for missing geometry/invalid points through the rendered app.
-  const result=await page.evaluate(()=>Skimmer.stages.map((s,i)=>{SkimmerApp.seekStep(i);return {i,width:document.querySelector('canvas').width,title:document.querySelector('#stepTitle').textContent};}));assert.equal(result.length,42);
+  const result=await page.evaluate(()=>Skimmer.stages.map((s,i)=>{SkimmerApp.seekStep(i);return {i,width:document.querySelector('canvas').width,title:document.querySelector('#stepTitle').textContent,expected:(s.dimensions||[]).length,shown:document.querySelectorAll('.measure-row').length};}));assert.equal(result.length,42);result.forEach(s=>assert.equal(s.shown,s.expected));
   await page.evaluate(()=>{SkimmerApp.seekStep(38);SkimmerApp.resetView('iso');});await page.screenshot({path:path.join(qaDir,'underside.png')});
   await page.locator('#full').click();await page.waitForFunction(()=>!!document.fullscreenElement);await page.locator('#full').click();await page.waitForFunction(()=>!document.fullscreenElement);
   for(const [width,height] of [[1280,720],[1024,768],[390,844]]){

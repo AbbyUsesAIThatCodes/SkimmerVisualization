@@ -53,3 +53,23 @@ test('trackball rotation reaches an inverted view and stays normalized',()=>{
   near(Math.hypot(...q),1);const p=S.qrotate([0,0,1],q);assert.ok(p[2]<0);
   const opposite=S.qbetween([0,0,1],[0,0,-1]);near(S.qrotate([0,0,1],opposite)[2],-1);
 });
+
+test('every drawing step has accurate measurements on both paper axes',()=>{
+  for(const d of S.drawing){
+    assert.ok(d.dimensions.length>=2,d.title);
+    const axes=new Set();
+    for(const m of d.dimensions){
+      const delta=S.sub(m.b,m.a);const axis=Math.abs(delta[0])>1e-8?0:1;
+      assert.ok(Math.abs(delta[1-axis])<1e-8,`${d.title}: dimension must follow a paper axis`);
+      assert.ok(m.value>0);near(Math.hypot(...delta),m.value);assert.ok(m.label);axes.add(axis);
+    }
+    assert.equal(axes.size,2,d.title);
+  }
+  for(const n of [4,6]){
+    const dims=S.drawing[n].dimensions;
+    assert.deepEqual(dims.map(d=>d.value),[.5,3]);
+    assert.equal(dims[1].a[0],0);assert.equal(dims[1].b[0],3);
+  }
+  for(const n of [12,17])S.drawing[n].dimensions.forEach((d,i)=>near(d.value,[.5,3][i]));
+  for(const n of [25,28])assert.deepEqual(S.drawing[n].dimensions.map(d=>d.value),[.125,.375,3]);
+});
