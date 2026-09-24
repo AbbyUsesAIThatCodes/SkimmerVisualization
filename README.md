@@ -1,41 +1,44 @@
-# Skimmer Visualization
+# DM · Skimmer Studio
 
-An interactive paper-skimmer construction model for Design & Modeling. This is the teacher-approved R5 version, copied unchanged from the lesson packet.
+An interactive paper-skimmer drawing and assembly guide. Start with whole, blank paper; draw one measured line at a time; identify the colored parts; then cut, fold, and assemble in the same 3D view.
 
-## Publish the student link
+## Student controls
 
-1. Open [Settings → Pages](https://github.com/AbbyUsesAIThatCodes/SkimmerVisualization/settings/pages).
-2. Set **Source** to **Deploy from a branch**.
-3. Select **main** and **/ (root)**, then **Save**.
-4. Wait for GitHub to show the successful deployment and live address.
+- **Next / Previous:** show a completed step immediately.
+- **Play:** animate forward. **Pause each step** is on initially.
+- **Replay step:** watch just the selected action again.
+- **Step selector:** jump directly to the main body, either of the two air fins, the air scoop, or any assembly action.
+- **Draw / Assemble:** jump to the blank sheet or the check-before-cutting stop.
+- **Drag:** rotate freely using a spherical trackball, including over the poles and underneath the model.
+- **Wheel / two-finger pinch:** zoom. Reset view restores the default framing; Paper view looks straight down.
+- **Inches / Millimeters:** switch all drawing instructions and dimension annotations. Metric values are exact conversions at 25.4 mm per inch, including 3.175 mm for 1/8 inch. Switching units never rescales the parts.
+- **Keyboard:** focus the picture and use arrow keys to rotate, +/− to zoom, and R to reset. Space plays or pauses when not operating another control.
 
-Expected student address after deployment:
+There are 29 individual drawing strokes and 42 total steps. The normal-speed assembly is 18 seconds, four times faster than R5. Quarter, half, and double speed are available. Playback always stops at the measurement check before cutting, even with continuous play selected. It starts paused and resets to blank paper.
 
-**https://abbyusesaithatcodes.github.io/SkimmerVisualization/**
+The rails are the folded sides of the main body. Labels are ink-like lettering attached to the paper surfaces, including both rails. WebGL depth testing hides letters behind other parts. The air scoop travels around the nose, lowers below the body, and slides into the channel with its tabs inside the rails.
 
-Add the live address as a link in Google Classroom. This README does not by itself confirm that Pages has been activated.
+Fold angles and thickness remain illustrative. Follow the teacher's working model for attachments, drying, and launcher setup.
 
-## Use it
+## Run or publish
 
-The page starts paused. Students can play/pause, move between eleven construction steps, use half speed, pause at each step, restart, and drag to rotate the model. It opens independently of the classroom's other activities.
+No build, installation, account, or external runtime is needed. Open `index.html` locally with the other files beside it, or serve the repository as a static website.
 
-The model shows one body, two fins, and one air scoop. The scoop goes under the FRONT, opposite the rear fins. Its narrow end aligns with the nose, and its tabs attach inside the rails. Paper thickness and fold angles are illustrative; match the teacher's physical model and demonstrate the actual launcher separately.
+The existing Pages setup uses `main` and `/ (root)`. Review and merge the pull request to update the student link:
 
-## School-device check
+https://abbyusesaithatcodes.github.io/SkimmerVisualization/
 
-Open the published link on a student device using school Wi-Fi. Check that the pieces appear, Next step advances, Play moves the model, and dragging rotates it. The browser needs JavaScript and WebGL.
+## Files
 
-For an allow-list request, provide the full student URL above and the hostname **abbyusesaithatcodes.github.io**. The page loads no external libraries, fonts, scripts, images, or media.
+- `index.html` — accessible controls and page layout.
+- `style.css` — responsive DM visual theme.
+- `model.js` — measured drawing, assembly geometry, timing, unit formatting, and rotation math.
+- `app.js` — controls, animation, WebGL rendering, and paper lettering; includes a basic Canvas fallback.
+- `assets/dm-cube.svg` — vector cube emblem extracted from the existing DM bellringer artwork, without surrounding text.
+- `tests/model.test.cjs` — independent checks for dimensions, stroke progression, collision clearance, label planes, and rotation.
 
-## Files and privacy
-
-- `index.html`: the complete standalone interactive, including its styling and 3D code.
-- `.nojekyll`: serves the static files without Jekyll processing.
-
-No install or build is needed. No student account, name collection, shared state, analytics code, answer submission, or saved progress is included. GitHub may keep ordinary hosting access logs.
+The app makes no external library, font, image, or analytics requests. It collects no student data and saves no progress. No curriculum documents or answer keys are included.
 
 ## Verification
 
-The uploaded page matches the approved R5 HTML exactly: Git blob `890cb190a897ad049984836b366a182a8f5bd268`. Programmatic checks covered finite geometry, all stages, seeking, step navigation, automatic pause, and orbit handlers. The teacher has successfully tried the R5 interactive; a school-network test is still required.
-
-Original classroom illustration; not an official PLTW publication. No curriculum PDFs or teacher answer keys are included in this repository.
+Run `node --test tests/model.test.cjs` for the geometry and timing checks. See `QA.md` for the browser checks and their limits. Confirm the merged student link once on a school device and school Wi-Fi before class.
