@@ -43,7 +43,7 @@
       let col=rgb(q.color);
       if(q.id==='sheet')col=Skimmer.mix(col,[250/255,251/255,245/255],Skimmer.smooth(assemblyTime,5,7));
       for(let k=1;k<q.pts.length-1;k++)for(const p of [q.pts[0],q.pts[k],q.pts[k+1]])fill.push(...vertex(p,col));
-      if(state.t>Skimmer.assemblyStart||q.id==='sheet')for(let k=0;k<q.pts.length;k++)for(const p of [q.pts[k],q.pts[(k+1)%q.pts.length]])edges.push(...vertex(p,[.19,.32,.28],[-1,-1],.00002));
+      if(state.t>Skimmer.assemblyStart||q.id==='sheet')for(let k=0;k<q.pts.length;k++)for(const p of [q.pts[k],q.pts[(k+1)%q.pts.length]])edges.push(...vertex(p,q.id==='sheet'?[.66,.72,.68]:[.19,.32,.28],[-1,-1],.00002));
       for(const l of q.labels){
         const [u0,v0,u1,v1]=labelUV[l.text];
         const fit=Math.min(1,((u1-u0)*1024/64)*l.h/l.w);
@@ -60,7 +60,7 @@
   function paintFallback(pr){
     $('#graphicsStatus').textContent='Basic 3D view · this browser has no WebGL.';
     for(const q of pr.polys){
-      ctx.beginPath();q.pts.forEach((p,i)=>i?ctx.lineTo(...p.slice(0,2)):ctx.moveTo(...p.slice(0,2)));ctx.closePath();ctx.fillStyle=q.color;ctx.fill();ctx.strokeStyle='#476b5d';ctx.stroke();
+      ctx.beginPath();q.pts.forEach((p,i)=>i?ctx.lineTo(...p.slice(0,2)):ctx.moveTo(...p.slice(0,2)));ctx.closePath();ctx.fillStyle=q.color;ctx.fill();ctx.strokeStyle=q.id==='sheet'?'#a8b8ad':'#476b5d';ctx.lineWidth=1;ctx.stroke();
       for(const l of q.labels){const [a,b,,d]=l.pts;ctx.save();ctx.transform((b[0]-a[0])/1024,(b[1]-a[1])/1024,(d[0]-a[0])/64,(d[1]-a[1])/64,a[0],a[1]);ctx.fillStyle='#193d34';ctx.font='700 42px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(l.text,512,32,980);ctx.restore();}
     }
   }
@@ -68,7 +68,7 @@
   function dimension(d,pr,dpr){
     const a=pr.point(d.a),b=pr.point(d.b),dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);
     if(len<2*dpr)return;
-    const u=[dx/len,dy/len],n=[-u[1],u[0]],offset=25*dpr;
+    const u=[dx/len,dy/len],side=Math.sign(d.offset||28),n=[-u[1]*side,u[0]*side],offset=Math.abs(d.offset||28)*dpr;
     const aa=[a[0]+n[0]*offset,a[1]+n[1]*offset],bb=[b[0]+n[0]*offset,b[1]+n[1]*offset];
     stroke(a,[aa[0]+n[0]*5*dpr,aa[1]+n[1]*5*dpr],'#9375aa',dpr);
     stroke(b,[bb[0]+n[0]*5*dpr,bb[1]+n[1]*5*dpr],'#9375aa',dpr);
@@ -76,7 +76,7 @@
     for(const [p,sign] of [[aa,1],[bb,-1]]){ctx.beginPath();ctx.moveTo(...p);ctx.lineTo(p[0]+sign*u[0]*6*dpr+n[0]*3*dpr,p[1]+sign*u[1]*6*dpr+n[1]*3*dpr);ctx.lineTo(p[0]+sign*u[0]*6*dpr-n[0]*3*dpr,p[1]+sign*u[1]*6*dpr-n[1]*3*dpr);ctx.closePath();ctx.fillStyle='#795099';ctx.fill();}
     const text=Skimmer.measure(d.value,state.units);ctx.font=`700 ${13*dpr}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';
     const tw=ctx.measureText(text).width+14*dpr;
-    const mx=Skimmer.clamp((aa[0]+bb[0])/2+n[0]*(tw/2+10*dpr),tw/2+4*dpr,canvas.width-tw/2-4*dpr),my=Skimmer.clamp((aa[1]+bb[1])/2+n[1]*18*dpr,60*dpr,canvas.height-35*dpr);
+    const mx=Skimmer.clamp((aa[0]+bb[0])/2+n[0]*(tw/2+10*dpr),tw/2+4*dpr,canvas.width-tw/2-4*dpr),my=Skimmer.clamp((aa[1]+bb[1])/2+n[1]*18*dpr,18*dpr,canvas.height-35*dpr);
     ctx.fillStyle='#fffdf7';ctx.beginPath();ctx.roundRect(mx-tw/2,my-12*dpr,tw,24*dpr,6*dpr);ctx.fill();ctx.fillStyle='#795099';ctx.fillText(text,mx,my);
   }
   let cachedStage=-1,cachedUnits='';
@@ -85,7 +85,12 @@
     if(i!==cachedStage||state.units!==cachedUnits){
       $('#stepNumber').textContent=`${s.group} · Step ${i+1} of ${Skimmer.stages.length}`;
       $('#stepTitle').textContent=s.title;$('#instruction').textContent=Skimmer.instruction(s,state.units);
-      $('#measurement').textContent=s.dimensions?[...new Set(s.dimensions.map(d=>Skimmer.measure(d.value,state.units)))].join(' · '):'';
+      $('#measurement').replaceChildren(...(s.dimensions||[]).map(d=>{
+        const row=document.createElement('div');row.className='measure-row';
+        const label=document.createElement('span');label.className='measure-label';label.textContent=d.label;
+        const value=document.createElement('strong');value.className='measure-value';value.textContent=Skimmer.measure(d.value,state.units);
+        row.append(label,value);return row;
+      }));
       stageSelect.value=i;cachedStage=i;cachedUnits=state.units;
       $('#drawChapter').classList.toggle('active',state.t<Skimmer.assemblyStart);$('#assembleChapter').classList.toggle('active',state.t>=Skimmer.assemblyStart);
       $('#drawChapter').setAttribute('aria-current',state.t<Skimmer.assemblyStart?'step':'false');$('#assembleChapter').setAttribute('aria-current',state.t>=Skimmer.assemblyStart?'step':'false');
@@ -103,7 +108,7 @@
     ctx.fillStyle='#fafbf5';ctx.fillRect(0,0,W,H);
     const f=Skimmer.frame(state.t),pr=Skimmer.projection(f.polys,{width:W,height:H,zoom:state.zoom,rotation:state.rotation,view:state.view,assemblyTime:f.assemblyTime});
     paint3D(pr,W,H,f.assemblyTime);
-    for(const l of f.lines){const a=pr.point(l.a),b=pr.point(l.b);stroke(a,b,l.active?'#8655aa':'#52665c',(l.active?2.8:1.4)*dpr,l.kind==='fold'?[6*dpr,4*dpr]:[]);if(l.active){ctx.beginPath();ctx.arc(b[0],b[1],3.5*dpr,0,Math.PI*2);ctx.fillStyle='#8655aa';ctx.fill();}}
+    for(const l of f.lines){const a=pr.point(l.a),b=pr.point(l.b);stroke(a,b,l.active?'#8655aa':'#294b40',(l.active?3.8:l.kind==='fold'?2.3:2.8)*dpr,l.kind==='fold'?[6*dpr,4*dpr]:[]);if(l.active){ctx.beginPath();ctx.arc(b[0],b[1],3.5*dpr,0,Math.PI*2);ctx.fillStyle='#8655aa';ctx.fill();}}
     const s=Skimmer.stages[Skimmer.stageIndex(state.t)];
     if(s.dimensions)for(const d of s.dimensions)dimension(d,pr,dpr);
     updateUI();
@@ -149,11 +154,11 @@
   document.addEventListener('visibilitychange',()=>{state.last=0;});
   function advance(seconds){
     let next=Math.min(Skimmer.duration,state.t+seconds*Number($('#speed').value));
-    const boundary=Skimmer.stages.find(s=>s.at>state.t+1e-7);
+    const boundary=Skimmer.stages.find(s=>s.at>state.t);
     if(replayEnd!==null&&next>=replayEnd){next=replayEnd;state.running=false;replayEnd=null;}
     else if($('#pauseSteps').checked&&boundary&&next>=boundary.at){next=boundary.at;state.running=false;}
     // The measurement check is a real stop even when continuous playback is selected.
-    if(state.t<Skimmer.assemblyStart-1e-7&&next>=Skimmer.assemblyStart){next=Skimmer.assemblyStart;state.running=false;}
+    if(state.t<Skimmer.assemblyStart&&next>=Skimmer.assemblyStart){next=Skimmer.assemblyStart;state.running=false;}
     transitionView(next);state.t=next;if(state.t>=Skimmer.duration)state.running=false;render();
   }
   function tick(now){if(state.running&&state.last&&!document.hidden)advance(Math.min((now-state.last)/1000,.1));state.last=now;requestAnimationFrame(tick);}

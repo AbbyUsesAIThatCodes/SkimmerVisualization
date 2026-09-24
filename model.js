@@ -27,34 +27,51 @@ const Skimmer = (() => {
       dimensions: dimensions || [{a:[...a,0], b:[...b,0], value:Math.hypot(a[0]-b[0],a[1]-b[1])}]});
   }
   const M = n => `{${n}}`;
-  line('Main body','Draw the first long edge',[0,-2],[11,-2],'cut',`Start at ruler zero. Draw ${M(11)} along a straight edge of the paper.`);
-  line('Main body','Draw the front edge',[11,-2],[11,2],'cut',`Make a square corner. Draw ${M(4)} across the paper.`);
-  line('Main body','Draw the other long edge',[11,2],[0,2],'cut',`Draw ${M(11)} parallel to the first line. Keep the body ${M(4)} wide.`);
-  line('Main body','Close the rear edge',[0,2],[0,-2],'cut',`Join the two long edges with a ${M(4)} line. This short end is the REAR.`);
+  const dimension = (label, a, b, offset = 28) => ({label,a:[...a,0],b:[...b,0],
+    value:Math.hypot(a[0]-b[0],a[1]-b[1]),offset});
+  const bodyDimensions = () => [
+    dimension('Body length',[0,-2],[11,-2],-30),
+    dimension('Body width',[11,-2],[11,2],-30)
+  ];
+  line('Main body','Draw the first long edge',[0,-2],[11,-2],'cut',`Start at ruler zero. Draw ${M(11)} along a straight edge of the paper.`,bodyDimensions());
+  line('Main body','Draw the front edge',[11,-2],[11,2],'cut',`Make a square corner. Draw ${M(4)} across the paper.`,bodyDimensions());
+  line('Main body','Draw the other long edge',[11,2],[0,2],'cut',`Draw ${M(11)} parallel to the first line. Keep the body ${M(4)} wide.`,bodyDimensions());
+  line('Main body','Close the rear edge',[0,2],[0,-2],'cut',`Join the two long edges with a ${M(4)} line. This short end is the REAR.`,bodyDimensions());
   for (const side of [-1,1]) {
     const y=side*1.5;
-    line('Main body',`Mark ${side<0?'first':'second'} rail fold`,[3,y],[11,y],'fold',`Measure ${M(.5)} inward from this long edge. Draw a dashed fold line, stopping ${M(3)} from the rear.`,[{a:[6,side*2,0],b:[6,y,0],value:.5}]);
-    line('Main body',`Mark ${side<0?'first':'second'} rear slit`,[0,y],[3,y],'cut',`Continue on the same line for ${M(3)} from the REAR. Use a solid line here: this short section will be cut.`);
+    line('Main body',`Mark ${side<0?'first':'second'} rail fold`,[3,y],[11,y],'fold',`Measure ${M(.5)} inward from this long edge. Draw a dashed fold line, stopping ${M(3)} from the rear.`,[dimension('From long edge',[6,side*2],[6,y]),dimension('From rear',[0,y],[3,y],side*32)]);
+    line('Main body',`Mark ${side<0?'first':'second'} rear slit`,[0,y],[3,y],'cut',`Continue on the same line for ${M(3)} from the REAR. Use a solid line here: this short section will be cut.`,[dimension('Slit length',[0,y],[3,y],side*32),dimension('From long edge',[1.5,side*2],[1.5,y])]);
   }
-  line('Main body','Mark the rear panel hinge',[3,-1.5],[3,1.5],'fold',`Join the ends of the two slits with a dashed line. This is a fold, not another cut.`,[{a:[0,0,0],b:[3,0,0],value:3}]);
+  line('Main body','Mark the rear panel hinge',[3,-1.5],[3,1.5],'fold',`Join the ends of the two slits with a dashed line. This is a fold, not another cut.`,[dimension('From rear',[0,-1.5],[3,-1.5],-32),dimension('Panel width',[3,-1.5],[3,1.5],-32)]);
   const fp=[[0,0,0],[3,0,0],[3,.5,0],[.5,3,0],[0,3,0]];
   for (const j of [0,1]) {
     const x=j*3.4,y=2.6, group=`Air fins ${j+1} of 2`;
-    line(group,'Draw the air fin base',[x,y],[x+3,y],'cut',`Leave a little space beside the body. Draw a ${M(3)} base.`);
-    line(group,'Draw the short front edge',[x+3,y],[x+3,y+.5],'cut',`At the FRONT end of this air fin, draw a perpendicular ${M(.5)} line.`);
-    line(group,'Draw the tall rear edge',[x,y],[x,y+3],'cut',`At the other end of the base, draw a perpendicular ${M(3)} line.`);
-    line(group,'Draw the short top edge',[x,y+3],[x+.5,y+3],'cut',`From the tall edge, draw ${M(.5)} parallel to the base.`);
-    line(group,'Join the two short edges',[x+.5,y+3],[x+3,y+.5],'cut','Join the ends with a diagonal. Use the two measured endpoints; do not guess the slope.',[{a:[x,y+3,0],b:[x+.5,y+3,0],value:.5},{a:[x+3,y,0],b:[x+3,y+.5,0],value:.5}]);
+    const base = () => dimension('Base length',[x,y],[x+3,y],-28);
+    const height = () => dimension('Height from base',[x,y],[x,y+3],28);
+    const front = () => dimension('Short front edge',[x+3,y],[x+3,y+.5],-28);
+    const top = () => dimension('Short top edge',[x,y+3],[x+.5,y+3],28);
+    line(group,'Draw the air fin base',[x,y],[x+3,y],'cut',`Leave a little space beside the body. Draw a ${M(3)} base.`,[base(),height()]);
+    line(group,'Draw the short front edge',[x+3,y],[x+3,y+.5],'cut',`At the FRONT end of this air fin, draw a perpendicular ${M(.5)} line.`,[front(),base()]);
+    line(group,'Draw the tall rear edge',[x,y],[x,y+3],'cut',`At the other end of the base, draw a perpendicular ${M(3)} line.`,[height(),base()]);
+    line(group,'Draw the short top edge',[x,y+3],[x+.5,y+3],'cut',`From the tall edge, draw ${M(.5)} parallel to the base.`,[top(),height()]);
+    line(group,'Join the two short edges',[x+.5,y+3],[x+3,y+.5],'cut','Join the ends with a diagonal. Use the two measured endpoints; do not guess the slope.',[top(),front()]);
   }
-  line('Air scoop','Draw the air scoop front',[11,3],[11,6],'cut',`In the remaining space, draw ${M(3)}. This is the narrow FRONT end of the air scoop center.`);
-  line('Air scoop','Draw the first center fold',[11,6],[8,6],'fold',`Draw a perpendicular dashed line ${M(3)} long. This edge will fold; it will not be cut.`);
-  line('Air scoop','Draw the air scoop rear',[8,6],[8,3],'cut',`Draw ${M(3)} parallel to the front edge.`);
-  line('Air scoop','Close the center square',[8,3],[11,3],'fold',`Close the ${M(3)} by ${M(3)} center with a dashed fold line.`);
+  const centerDimensions = () => [
+    dimension('Center length',[8,3],[11,3],-28),
+    dimension('Center width',[8,3],[8,6],28)
+  ];
+  line('Air scoop','Draw the air scoop front',[11,3],[11,6],'cut',`In the remaining space, draw ${M(3)}. This is the narrow FRONT end of the air scoop center.`,centerDimensions());
+  line('Air scoop','Draw the first center fold',[11,6],[8,6],'fold',`Draw a perpendicular dashed line ${M(3)} long. This edge will fold; it will not be cut.`,centerDimensions());
+  line('Air scoop','Draw the air scoop rear',[8,6],[8,3],'cut',`Draw ${M(3)} parallel to the front edge.`,centerDimensions());
+  line('Air scoop','Close the center square',[8,3],[11,3],'fold',`Close the ${M(3)} by ${M(3)} center with a dashed fold line.`,centerDimensions());
   for (const side of [-1,1]) {
     const y=4.5+side*1.5;
-    line('Air scoop',`Extend ${side<0?'first':'second'} front corner`,[11,y],[11,y+side*.125],'cut',`Extend the FRONT line ${M(.125)} outside this corner. Keep it straight.`);
-    line('Air scoop',`Extend ${side<0?'first':'second'} rear corner`,[8,y],[8,y+side*.375],'cut',`Extend the REAR line ${M(.375)} outside this corner.`);
-    line('Air scoop',`Join ${side<0?'first':'second'} tab edge`,[8,y+side*.375],[11,y+side*.125],'cut','Connect the two offset marks. This sloping outer edge is a cut; the inner dashed edge is a fold.',[{a:[11,y,0],b:[11,y+side*.125,0],value:.125},{a:[8,y,0],b:[8,y+side*.375,0],value:.375}]);
+    const length = () => dimension('Center length',[8,y],[11,y],side*46);
+    const frontOffset = () => dimension('Front offset',[11,y],[11,y+side*.125],-side*28);
+    const rearOffset = () => dimension('Rear offset',[8,y],[8,y+side*.375],side*28);
+    line('Air scoop',`Extend ${side<0?'first':'second'} front corner`,[11,y],[11,y+side*.125],'cut',`Extend the FRONT line ${M(.125)} outside this corner. Keep it straight.`,[frontOffset(),length()]);
+    line('Air scoop',`Extend ${side<0?'first':'second'} rear corner`,[8,y],[8,y+side*.375],'cut',`Extend the REAR line ${M(.375)} outside this corner.`,[rearOffset(),length()]);
+    line('Air scoop',`Join ${side<0?'first':'second'} tab edge`,[8,y+side*.375],[11,y+side*.125],'cut','Connect the two offset marks. This sloping outer edge is a cut; the inner dashed edge is a fold.',[frontOffset(),rearOffset(),length()]);
   }
   const stages=[{at:0,group:'Start',title:'Start with whole, blank paper',instruction:'Use one flat file-folder half. Keep your ruler, pencil, and a square corner ready. The drawing uses an 11 in × 8 1/2 in area; your paper may be larger.',type:'blank'}];
   const lineSeconds=1.4;

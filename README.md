@@ -14,6 +14,8 @@ An interactive paper-skimmer drawing and assembly guide. Start with whole, blank
 - **Inches / Millimeters:** switch all drawing instructions and dimension annotations. Metric values are exact conversions at 25.4 mm per inch, including 3.175 mm for 1/8 inch. Switching units never rescales the parts.
 - **Keyboard:** focus the picture and use arrow keys to rotate, +/− to zoom, and R to reset. Space plays or pauses when not operating another control.
 
+Every drawing step shows measurements on both paper axes, with labels explaining each value. Sloping air scoop tabs show both offsets and the center length. Drawn cuts and dashed folds are heavier than the thin, pale paper boundary.
+
 There are 29 individual drawing strokes and 42 total steps. The normal-speed assembly is 18 seconds, four times faster than R5. Quarter, half, and double speed are available. Playback always stops at the measurement check before cutting, even with continuous play selected. It starts paused and resets to blank paper.
 
 The rails are the folded sides of the main body. Labels are ink-like lettering attached to the paper surfaces, including both rails. WebGL depth testing hides letters behind other parts. The air scoop travels around the nose, lowers below the body, and slides into the channel with its tabs inside the rails.
