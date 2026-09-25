@@ -53,3 +53,13 @@ An additional visual review covered both rail folds, the tall air fin edge, and 
 ![Air fin top length and height](docs/air-fin-dimensions-preview.png)
 
 ![Bright dimension arrows on a 1024 by 640 laptop window](docs/dimension-laptop-preview.png)
+
+## Rail inset and moving pencil refinements
+
+- The 1/2 in / 12.7 mm inset is measured outside the rear edge for both rail folds and both rear slits. Screen space is reserved using the label's actual width; the slit length stays inside the body alongside the other length measurements.
+- Dimension extension lines begin 8 CSS pixels away from their measured endpoints. The active stroke renders above the dimension guides, and the pencil dot renders last with a pale outline.
+- Mid-stroke views were captured at 1366 × 650, 1024 × 640, 900 × 650, and 390 × 844 in both units. The rail callouts were visually reviewed in paper view.
+- All four air scoop tab extensions were checked at 10%, 25%, 50%, 75%, 90%, and 100% progress at those four sizes, in both units. All 192 canvas pixel checks found the pencil color at the current drawing endpoint, including when a dimension guide passes behind it.
+- The 7 geometry checks and the existing 42-stage browser checks still pass.
+
+![Visible pencil dot while drawing the air scoop tab](docs/air-scoop-pencil-preview.png)
