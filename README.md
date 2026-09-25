@@ -18,6 +18,8 @@ Every drawing step shows measurements on both paper axes, with labels explaining
 
 The rail inset measurement sits outside the rear edge of the paper, with room reserved for its label on small screens. Dimension guides leave a gap at the paper. The active drawing stroke appears above those guides, and its moving pencil dot has a pale outline and stays on top, including on the tiny air scoop tabs.
 
+For each side, draw the 3 in rear slit first, starting at the measured inset on the rear edge. Then continue from its endpoint with the 8 in dashed rail fold. Steps 6–9 follow this order for the first and second sides.
+
 There are 29 individual drawing strokes and 42 total steps. The normal-speed assembly is 18 seconds, four times faster than R5. Quarter, half, and double speed are available. Playback always stops at the measurement check before cutting, even with continuous play selected. It starts paused and resets to blank paper.
 
 The rails are the folded sides of the main body. Labels are ink-like lettering attached to the paper surfaces, including both rails. WebGL depth testing hides letters behind other parts. The air scoop travels around the nose, lowers below the body, and slides into the channel with its tabs inside the rails.

@@ -63,3 +63,7 @@ An additional visual review covered both rail folds, the tall air fin edge, and 
 - The 7 geometry checks and the existing 42-stage browser checks still pass.
 
 ![Visible pencil dot while drawing the air scoop tab](docs/air-scoop-pencil-preview.png)
+
+## Rear slit before rail fold
+
+Steps 6–9 now draw the first rear slit, first rail fold, second rear slit, then second rail fold. Each slit starts at the measured inset on the rear edge; the following fold starts exactly at that slit's endpoint. Both instructions were updated in inches and millimeters. The existing geometry checks and 42-stage browser checks pass with the new order, and the rail preview shows the completed slit before the fold.
