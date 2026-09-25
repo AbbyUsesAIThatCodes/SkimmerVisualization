@@ -65,19 +65,35 @@
     }
   }
   function stroke(a,b,color,width=2,dashes=[]){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dashes);ctx.stroke();ctx.setLineDash([]);}
+  const dimensionInk='#9025e8',dimensionHalo='#fffdf7';
+  function dimensionStroke(a,b,width,dpr){
+    // A pale outline keeps the measurement distinct where it crosses drawn ink.
+    stroke(a,b,dimensionHalo,(width+3)*dpr);
+    stroke(a,b,dimensionInk,width*dpr);
+  }
   function dimension(d,pr,dpr){
     const a=pr.point(d.a),b=pr.point(d.b),dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy);
     if(len<2*dpr)return;
     const u=[dx/len,dy/len],side=Math.sign(d.offset||28),n=[-u[1]*side,u[0]*side],offset=Math.abs(d.offset||28)*dpr;
     const aa=[a[0]+n[0]*offset,a[1]+n[1]*offset],bb=[b[0]+n[0]*offset,b[1]+n[1]*offset];
-    stroke(a,[aa[0]+n[0]*5*dpr,aa[1]+n[1]*5*dpr],'#9375aa',dpr);
-    stroke(b,[bb[0]+n[0]*5*dpr,bb[1]+n[1]*5*dpr],'#9375aa',dpr);
-    stroke(aa,bb,'#795099',1.3*dpr);
-    for(const [p,sign] of [[aa,1],[bb,-1]]){ctx.beginPath();ctx.moveTo(...p);ctx.lineTo(p[0]+sign*u[0]*6*dpr+n[0]*3*dpr,p[1]+sign*u[1]*6*dpr+n[1]*3*dpr);ctx.lineTo(p[0]+sign*u[0]*6*dpr-n[0]*3*dpr,p[1]+sign*u[1]*6*dpr-n[1]*3*dpr);ctx.closePath();ctx.fillStyle='#795099';ctx.fill();}
+    dimensionStroke(a,[aa[0]+n[0]*5*dpr,aa[1]+n[1]*5*dpr],1.6,dpr);
+    dimensionStroke(b,[bb[0]+n[0]*5*dpr,bb[1]+n[1]*5*dpr],1.6,dpr);
+    // On tiny offsets, put the arrowheads outside so they cannot merge together.
+    const outside=len<24*dpr,extension=outside?12*dpr:0;
+    dimensionStroke([aa[0]-u[0]*extension,aa[1]-u[1]*extension],[bb[0]+u[0]*extension,bb[1]+u[1]*extension],2.8,dpr);
+    for(const [p,end] of [[aa,1],[bb,-1]]){
+      const sign=end*(outside?-1:1);
+      ctx.beginPath();ctx.moveTo(...p);ctx.lineTo(p[0]+sign*u[0]*8*dpr+n[0]*4*dpr,p[1]+sign*u[1]*8*dpr+n[1]*4*dpr);ctx.lineTo(p[0]+sign*u[0]*8*dpr-n[0]*4*dpr,p[1]+sign*u[1]*8*dpr-n[1]*4*dpr);ctx.closePath();
+      ctx.strokeStyle=dimensionHalo;ctx.lineWidth=3*dpr;ctx.stroke();ctx.fillStyle=dimensionInk;ctx.fill();
+    }
     const text=Skimmer.measure(d.value,state.units);ctx.font=`700 ${13*dpr}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';
     const tw=ctx.measureText(text).width+14*dpr;
     const mx=Skimmer.clamp((aa[0]+bb[0])/2+n[0]*(tw/2+10*dpr),tw/2+4*dpr,canvas.width-tw/2-4*dpr),my=Skimmer.clamp((aa[1]+bb[1])/2+n[1]*18*dpr,18*dpr,canvas.height-35*dpr);
-    ctx.fillStyle='#fffdf7';ctx.beginPath();ctx.roundRect(mx-tw/2,my-12*dpr,tw,24*dpr,6*dpr);ctx.fill();ctx.fillStyle='#795099';ctx.fillText(text,mx,my);
+    return {text,mx,my,tw};
+  }
+  function dimensionLabel({text,mx,my,tw},dpr){
+    ctx.font=`700 ${13*dpr}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle=dimensionHalo;ctx.beginPath();ctx.roundRect(mx-tw/2,my-12*dpr,tw,24*dpr,6*dpr);ctx.fill();ctx.fillStyle=dimensionInk;ctx.fillText(text,mx,my);
   }
   let cachedStage=-1,cachedUnits='';
   function updateUI(){
@@ -110,7 +126,9 @@
     paint3D(pr,W,H,f.assemblyTime);
     for(const l of f.lines){const a=pr.point(l.a),b=pr.point(l.b);stroke(a,b,l.active?'#8655aa':'#294b40',(l.active?3.8:l.kind==='fold'?2.3:2.8)*dpr,l.kind==='fold'?[6*dpr,4*dpr]:[]);if(l.active){ctx.beginPath();ctx.arc(b[0],b[1],3.5*dpr,0,Math.PI*2);ctx.fillStyle='#8655aa';ctx.fill();}}
     const s=Skimmer.stages[Skimmer.stageIndex(state.t)];
-    if(s.dimensions)for(const d of s.dimensions)dimension(d,pr,dpr);
+    // Paint all text last so another measurement cannot draw across a number.
+    const dimensionLabels=(s.dimensions||[]).map(d=>dimension(d,pr,dpr)).filter(Boolean);
+    for(const label of dimensionLabels)dimensionLabel(label,dpr);
     updateUI();
   }
   function transitionView(next){if(state.t<=Skimmer.assemblyStart&&next>Skimmer.assemblyStart)state.view='iso';else if(state.t>Skimmer.assemblyStart&&next<Skimmer.assemblyStart)state.view='top';}

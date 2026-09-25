@@ -7,7 +7,7 @@
 - Dimensions match the existing measured model: body 11 × 4 in, rails 1/2 in, two matching air fins with 3 in extents, and a 3 × 3 in air scoop center.
 - Exact fractional conversions include 1/8 in = 3.175 mm and 3/8 in = 9.525 mm; changing display units does not change geometry.
 - Each of the 29 drawing strokes appears progressively from its starting endpoint; blank paper has no pre-drawn parts.
-- Every drawing step has positive, geometrically accurate dimensions on both perpendicular paper axes, with named measurement rows. The rail offsets, air fin top/height, and all three air scoop tab dimensions have explicit checks.
+- Every drawing step has positive, geometrically accurate dimensions on both perpendicular paper axes, with named measurement rows. The rail offsets and explicit 8 in fold lengths, air fin top/height, and all three air scoop tab dimensions have explicit checks.
 - Every timeline boundary and sampled geometry/projection is finite.
 - A conservative clear-space check samples the air scoop path every 0.005 source seconds: it remains outside the body or below the deck inside both rails. Its front edge finishes at the nose.
 - All lettering vertices remain on the plane of their own part during every fold.
@@ -42,6 +42,14 @@ The check was in Chromium, not on the classroom's actual student devices. Confir
 
 Reviewed the rail placement, air fin top edge, and paper-edge examples, plus body outlines, rear slits/hinge, air fin base/diagonal, air scoop center, and both tab sides. Both axes remain visible, and drawn strokes are heavier than the paper boundary.
 
-![Rail offset and distance from rear](docs/rail-dimensions-preview.png)
+Measurement arrows are now bright purple, 2.8 CSS pixels thick, with a pale outline and larger arrowheads. Very short dimensions use outside arrowheads to avoid a merged shape. Measurement numbers render after all arrows, keeping crossing lines out of the text. The line key identifies measurement arrows separately from drawn cuts and folds.
+
+Both rail folds show the 1/2 in inset, 3 in rear gap, and 8 in fold length (12.7, 76.2, and 203.2 mm). The gap and length arrows sit together inside the body, clear of the view buttons on short laptop windows.
+
+An additional visual review covered both rail folds, the tall air fin edge, and small air scoop offsets at 1920 × 960, 1366 × 650, 1024 × 640, 900 × 650, and 390 × 844. The rail's three values and instructions were checked in inches and millimeters at each size. Laptop layouts have no page overflow; the instruction panel can scroll on short windows.
+
+![Rail inset, rear gap, and explicit fold length](docs/rail-dimensions-preview.png)
 
 ![Air fin top length and height](docs/air-fin-dimensions-preview.png)
+
+![Bright dimension arrows on a 1024 by 640 laptop window](docs/dimension-laptop-preview.png)
