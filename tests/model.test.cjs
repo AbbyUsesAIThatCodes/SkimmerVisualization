@@ -67,8 +67,9 @@ test('every drawing step has accurate measurements on both paper axes',()=>{
   }
   for(const n of [4,6]){
     const dims=S.drawing[n].dimensions;
-    assert.deepEqual(dims.map(d=>d.value),[.5,3]);
+    assert.deepEqual(dims.map(d=>d.value),[.5,3,8]);
     assert.equal(dims[1].a[0],0);assert.equal(dims[1].b[0],3);
+    assert.deepEqual(dims[2].a,S.drawing[n].a);assert.deepEqual(dims[2].b,S.drawing[n].b);
   }
   for(const n of [12,17])S.drawing[n].dimensions.forEach((d,i)=>near(d.value,[.5,3][i]));
   for(const n of [25,28])assert.deepEqual(S.drawing[n].dimensions.map(d=>d.value),[.125,.375,3]);

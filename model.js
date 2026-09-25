@@ -39,7 +39,11 @@ const Skimmer = (() => {
   line('Main body','Close the rear edge',[0,2],[0,-2],'cut',`Join the two long edges with a ${M(4)} line. This short end is the REAR.`,bodyDimensions());
   for (const side of [-1,1]) {
     const y=side*1.5;
-    line('Main body',`Mark ${side<0?'first':'second'} rail fold`,[3,y],[11,y],'fold',`Measure ${M(.5)} inward from this long edge. Draw a dashed fold line, stopping ${M(3)} from the rear.`,[dimension('From long edge',[6,side*2],[6,y]),dimension('From rear',[0,y],[3,y],side*32)]);
+    line('Main body',`Mark ${side<0?'first':'second'} rail fold`,[3,y],[11,y],'fold',`Measure ${M(.5)} inward from this long edge. Draw a dashed fold line ${M(8)} long, starting ${M(3)} from the rear.`,[
+      dimension('From long edge',[6,side*2],[6,y]),
+      dimension('From rear',[0,y],[3,y],-side*32),
+      dimension('Fold line length',[3,y],[11,y],-side*32)
+    ]);
     line('Main body',`Mark ${side<0?'first':'second'} rear slit`,[0,y],[3,y],'cut',`Continue on the same line for ${M(3)} from the REAR. Use a solid line here: this short section will be cut.`,[dimension('Slit length',[0,y],[3,y],side*32),dimension('From long edge',[1.5,side*2],[1.5,y])]);
   }
   line('Main body','Mark the rear panel hinge',[3,-1.5],[3,1.5],'fold',`Join the ends of the two slits with a dashed line. This is a fold, not another cut.`,[dimension('From rear',[0,-1.5],[3,-1.5],-32),dimension('Panel width',[3,-1.5],[3,1.5],-32)]);
