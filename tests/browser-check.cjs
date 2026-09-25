@@ -17,8 +17,8 @@ const qaDir=path.join(__dirname,'..','test-output');fs.mkdirSync(qaDir,{recursiv
   await page.locator('#stage').selectOption('24');assert.match(await page.locator('#measurement').innerText(),/1\/8 in/);
   await page.locator('#metric').click();assert.deepEqual(await page.locator('.measure-value').allTextContents(),['3.175 mm','76.2 mm']);assert.match(await page.locator('#instruction').innerText(),/3.175 mm/);
   await page.screenshot({path:path.join(qaDir,'metric-tab.png')});
-  await page.locator('#imperial').click();await page.locator('#stage').selectOption('5');await page.screenshot({path:path.join(qaDir,'rail-drawing.png')});
-  for(const [step,name] of [[1,'drawn-paper-edge'],[7,'second-rail-dimensions'],[13,'air-fin-dimensions'],[26,'air-scoop-dimensions']]){
+  await page.locator('#imperial').click();await page.locator('#stage').selectOption('6');await page.screenshot({path:path.join(qaDir,'rail-drawing.png')});
+  for(const [step,name] of [[1,'drawn-paper-edge'],[8,'second-rail-dimensions'],[13,'air-fin-dimensions'],[26,'air-scoop-dimensions']]){
     await page.locator('#stage').selectOption(String(step));await page.screenshot({path:path.join(qaDir,`${name}.png`)});
   }
   await page.locator('#stage').selectOption('31');await page.screenshot({path:path.join(qaDir,'colored.png')});
