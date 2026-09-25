@@ -16,6 +16,8 @@ An interactive paper-skimmer drawing and assembly guide. Start with whole, blank
 
 Every drawing step shows measurements on both paper axes, with labels explaining each value. Both rail folds explicitly show their 8 in (203.2 mm) length alongside the inset and rear gap. Sloping air scoop tabs show both offsets and the center length. Drawn cuts and dashed folds are heavier than the thin, pale paper boundary. Measurement arrows use bright purple, thicker lines, and a pale outline to stay visible across drawn lines and paper edges.
 
+The rail inset measurement sits outside the rear edge of the paper, with room reserved for its label on small screens. Dimension guides leave a gap at the paper. The active drawing stroke appears above those guides, and its moving pencil dot has a pale outline and stays on top, including on the tiny air scoop tabs.
+
 There are 29 individual drawing strokes and 42 total steps. The normal-speed assembly is 18 seconds, four times faster than R5. Quarter, half, and double speed are available. Playback always stops at the measurement check before cutting, even with continuous play selected. It starts paused and resets to blank paper.
 
 The rails are the folded sides of the main body. Labels are ink-like lettering attached to the paper surfaces, including both rails. WebGL depth testing hides letters behind other parts. The air scoop travels around the nose, lowers below the body, and slides into the channel with its tabs inside the rails.

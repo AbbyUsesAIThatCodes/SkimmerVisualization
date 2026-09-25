@@ -39,12 +39,13 @@ const Skimmer = (() => {
   line('Main body','Close the rear edge',[0,2],[0,-2],'cut',`Join the two long edges with a ${M(4)} line. This short end is the REAR.`,bodyDimensions());
   for (const side of [-1,1]) {
     const y=side*1.5;
+    const railInset = () => ({...dimension('From long edge',[0,side*2],[0,y],-side*28),gutter:'rear'});
     line('Main body',`Mark ${side<0?'first':'second'} rail fold`,[3,y],[11,y],'fold',`Measure ${M(.5)} inward from this long edge. Draw a dashed fold line ${M(8)} long, starting ${M(3)} from the rear.`,[
-      dimension('From long edge',[6,side*2],[6,y]),
+      railInset(),
       dimension('From rear',[0,y],[3,y],-side*32),
       dimension('Fold line length',[3,y],[11,y],-side*32)
     ]);
-    line('Main body',`Mark ${side<0?'first':'second'} rear slit`,[0,y],[3,y],'cut',`Continue on the same line for ${M(3)} from the REAR. Use a solid line here: this short section will be cut.`,[dimension('Slit length',[0,y],[3,y],side*32),dimension('From long edge',[1.5,side*2],[1.5,y])]);
+    line('Main body',`Mark ${side<0?'first':'second'} rear slit`,[0,y],[3,y],'cut',`Continue on the same line for ${M(3)} from the REAR. Use a solid line here: this short section will be cut.`,[dimension('Slit length',[0,y],[3,y],-side*32),railInset()]);
   }
   line('Main body','Mark the rear panel hinge',[3,-1.5],[3,1.5],'fold',`Join the ends of the two slits with a dashed line. This is a fold, not another cut.`,[dimension('From rear',[0,-1.5],[3,-1.5],-32),dimension('Panel width',[3,-1.5],[3,1.5],-32)]);
   const fp=[[0,0,0],[3,0,0],[3,.5,0],[.5,3,0],[0,3,0]];
@@ -163,13 +164,13 @@ const Skimmer = (() => {
     const d=dot(a,b);if(d<-.999999){const axis=unit(cross(a,Math.abs(a[0])<.9?[1,0,0]:[0,1,0]));return [...axis,0];}
     return unit([...cross(a,b),1+d]);
   };
-  function projection(polys,{width=1200,height=670,zoom=1,rotation=[0,0,0,1],view='iso',assemblyTime=72}={}) {
+  function projection(polys,{width=1200,height=670,zoom=1,rotation=[0,0,0,1],view='iso',assemblyTime=72,insetLeft=0}={}) {
     const center=[5.5,2.25*(1-smooth(assemblyTime,0,10)),0];
     const yaw=view==='top'?0:.38,elevation=view==='top'?Math.PI/2:.72;
     const transform=p=>{const [x,y,z]=sub(p,center),u=x*Math.cos(yaw)-y*Math.sin(yaw),v=x*Math.sin(yaw)+y*Math.cos(yaw);return qrotate([u,v*Math.sin(elevation)-z*Math.cos(elevation),v*Math.cos(elevation)+z*Math.sin(elevation)],rotation);};
     const route= smooth(assemblyTime,40,43)*(1-smooth(assemblyTime,51,54));
-    const scale=Math.min(width/(14.7+4.8*route),height/11.2)*zoom;
-    const point=p=>{const a=transform(p);return [a[0]*scale+width/2,a[1]*scale+height/2,a[2]];};
+    const scale=Math.min((width-insetLeft)/(14.7+4.8*route),height/11.2)*zoom;
+    const point=p=>{const a=transform(p);return [a[0]*scale+(width+insetLeft)/2,a[1]*scale+height/2,a[2]];};
     const raw=polys.map(p=>({...p,pts:p.p.map(point),labels:p.labels.map(l=>({...l,pts:l.p.map(point)}))}));
     raw.forEach(p=>p.depth=p.pts.reduce((s,p)=>s+p[2],0)/p.pts.length);raw.sort((a,b)=>a.depth-b.depth);
     return {polys:raw,point,scale};

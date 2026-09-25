@@ -76,10 +76,11 @@
     if(len<2*dpr)return;
     const u=[dx/len,dy/len],side=Math.sign(d.offset||28),n=[-u[1]*side,u[0]*side],offset=Math.abs(d.offset||28)*dpr;
     const aa=[a[0]+n[0]*offset,a[1]+n[1]*offset],bb=[b[0]+n[0]*offset,b[1]+n[1]*offset];
-    dimensionStroke(a,[aa[0]+n[0]*5*dpr,aa[1]+n[1]*5*dpr],1.6,dpr);
-    dimensionStroke(b,[bb[0]+n[0]*5*dpr,bb[1]+n[1]*5*dpr],1.6,dpr);
+    // Leave room around the measured endpoints instead of painting over the ink.
+    dimensionStroke([a[0]+n[0]*8*dpr,a[1]+n[1]*8*dpr],[aa[0]+n[0]*5*dpr,aa[1]+n[1]*5*dpr],1.6,dpr);
+    dimensionStroke([b[0]+n[0]*8*dpr,b[1]+n[1]*8*dpr],[bb[0]+n[0]*5*dpr,bb[1]+n[1]*5*dpr],1.6,dpr);
     // On tiny offsets, put the arrowheads outside so they cannot merge together.
-    const outside=len<24*dpr,extension=outside?12*dpr:0;
+    const outside=len<18*dpr,extension=outside?12*dpr:0;
     dimensionStroke([aa[0]-u[0]*extension,aa[1]-u[1]*extension],[bb[0]+u[0]*extension,bb[1]+u[1]*extension],2.8,dpr);
     for(const [p,end] of [[aa,1],[bb,-1]]){
       const sign=end*(outside?-1:1);
@@ -122,13 +123,38 @@
     if(!W||!H)return;
     if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;}
     ctx.fillStyle='#fafbf5';ctx.fillRect(0,0,W,H);
-    const f=Skimmer.frame(state.t),pr=Skimmer.projection(f.polys,{width:W,height:H,zoom:state.zoom,rotation:state.rotation,view:state.view,assemblyTime:f.assemblyTime});
+    const f=Skimmer.frame(state.t),s=Skimmer.stages[Skimmer.stageIndex(state.t)];
+    const project=insetLeft=>Skimmer.projection(f.polys,{width:W,height:H,zoom:state.zoom,rotation:state.rotation,view:state.view,assemblyTime:f.assemblyTime,insetLeft});
+    let pr=project(0);
+    if(s.dimensions?.some(d=>d.gutter==='rear')){
+      // Reserve actual text width outside the paper, including the wider metric label.
+      ctx.font=`700 ${13*dpr}px system-ui`;
+      const needed=ctx.measureText(Skimmer.measure(.5,state.units)).width+64*dpr;
+      const left=p=>Math.min(...p.polys.flatMap(q=>q.pts.map(p=>p[0])));
+      if(left(pr)<needed){
+        // Find just enough room; keep as much paper visible as possible on laptops.
+        let lo=0,hi=W*.45;
+        for(let i=0;i<10;i++){
+          const mid=(lo+hi)/2;
+          if(left(project(mid))<needed)lo=mid;else hi=mid;
+        }
+        pr=project(hi);
+      }
+    }
     paint3D(pr,W,H,f.assemblyTime);
-    for(const l of f.lines){const a=pr.point(l.a),b=pr.point(l.b);stroke(a,b,l.active?'#8655aa':'#294b40',(l.active?3.8:l.kind==='fold'?2.3:2.8)*dpr,l.kind==='fold'?[6*dpr,4*dpr]:[]);if(l.active){ctx.beginPath();ctx.arc(b[0],b[1],3.5*dpr,0,Math.PI*2);ctx.fillStyle='#8655aa';ctx.fill();}}
-    const s=Skimmer.stages[Skimmer.stageIndex(state.t)];
+    const drawLine=l=>stroke(pr.point(l.a),pr.point(l.b),l.active?'#8655aa':'#294b40',(l.active?3.8:l.kind==='fold'?2.3:2.8)*dpr,l.kind==='fold'?[6*dpr,4*dpr]:[]);
+    for(const l of f.lines)drawLine(l);
     // Paint all text last so another measurement cannot draw across a number.
     const dimensionLabels=(s.dimensions||[]).map(d=>dimension(d,pr,dpr)).filter(Boolean);
+    const activeLine=f.lines.find(l=>l.active);
+    if(activeLine)drawLine(activeLine);
     for(const label of dimensionLabels)dimensionLabel(label,dpr);
+    if(activeLine){
+      // The pencil tip remains visible even when a guide crosses a very short tab.
+      const b=pr.point(activeLine.b);
+      ctx.beginPath();ctx.arc(b[0],b[1],4.5*dpr,0,Math.PI*2);
+      ctx.strokeStyle=dimensionHalo;ctx.lineWidth=3*dpr;ctx.stroke();ctx.fillStyle='#8655aa';ctx.fill();
+    }
     updateUI();
   }
   function transitionView(next){if(state.t<=Skimmer.assemblyStart&&next>Skimmer.assemblyStart)state.view='iso';else if(state.t>Skimmer.assemblyStart&&next<Skimmer.assemblyStart)state.view='top';}
