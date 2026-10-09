@@ -1,5 +1,7 @@
 # DM · Skimmer Studio
 
+**[Play SkimmerVisualization Online](https://abbyusesaithatcodes.github.io/SkimmerVisualization/)**
+
 An interactive paper-skimmer drawing and assembly guide. Start with whole, blank paper; draw one measured line at a time; identify the colored parts; then cut, fold, and assemble in the same 3D view.
 
 ## Student controls
